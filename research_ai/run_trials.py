@@ -12,7 +12,7 @@ from backend.evaluation.novelty_score import NoveltyScorer
 
 def run_trials():
     print("="*60)
-    print("RUNNING RESEARCH AI TRIALS")
+    print("RUNNING RESEARCHNEX TRIALS")
     print("="*60)
     
     print("\n[1] Testing RAG Retriever...")

@@ -1,7 +1,7 @@
 import os
 from langchain_core.prompts import PromptTemplate
-from backend.utils.llm_factory import get_llm
-from backend.rag.retriever import ResearchRetriever
+from utils.llm_factory import get_llm
+from rag.retriever import ResearchRetriever
 
 class QAChain:
     def __init__(self, retriever=None, llm=None):

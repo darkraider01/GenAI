@@ -20,3 +20,4 @@ pandas
 fpdf2
 langchain-google-genai
 fpdf
+seaborn

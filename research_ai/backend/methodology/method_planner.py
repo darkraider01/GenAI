@@ -1,8 +1,8 @@
 import os
 import json
 from langchain_core.prompts import PromptTemplate
-from backend.utils.llm_factory import get_llm
-from backend.rag.retriever import ResearchRetriever
+from utils.llm_factory import get_llm
+from rag.retriever import ResearchRetriever
 
 class MethodPlanner:
     def __init__(self, retriever=None, llm=None):
@@ -11,8 +11,7 @@ class MethodPlanner:
         self.llm = llm or get_llm(temperature=0.2)
         
         prompt_template = """
-        You are an expert AI research methodology planner.
-        Given a proposed research topic/gap and several relevant paper abstracts, exactingly design a rigorous scientific methodology for the new topic.
+        Identify the core scientific principles from the relevant papers and adapt them to solve the new research gap.
         
         New Research Topic: {topic}
 
@@ -40,8 +39,15 @@ class MethodPlanner:
         ### Ablation Studies
         - (Suggest 1-2 ablation studies to prove component efficacy)
 
-        ### Computational Setup
+        ### Experimental Setup & Compute
         - (Suggest the required computational hardware and framework, e.g., PyTorch, 4xA100 GPUs)
+        
+        ### System Reasoning & Primary Sources
+        - (Explain *why* this specific methodology was chosen based on the context).
+        
+        ### Primary Sources (Access Papers)
+        - (CRITICAL: List the top 2-3 most influential papers provided as clickable Markdown links. Format: `[[Title]](URL)`).
+        - (Example: `[[Attention Is All You Need]](https://arxiv.org/pdf/1706.03762v7)`)
         """
         
         self.prompt = PromptTemplate(
@@ -56,7 +62,10 @@ class MethodPlanner:
         
         context_parts = []
         for i, p in enumerate(papers):
-            context_parts.append(f"[Paper {i+1} Abstract]: {p.get('abstract', '')}")
+            title = p.get('title', 'Unknown Title')
+            pdf_link = p.get('pdf_url', '')
+            link_str = f" [Paper PDF URL: {pdf_link}]" if pdf_link else ""
+            context_parts.append(f"Source {i+1}:\nTitle: {title}{link_str}\nAbstract: {p.get('abstract', '')}")
             
         context_str = "\n\n".join(context_parts)
         

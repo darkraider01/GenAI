@@ -40,12 +40,17 @@ class NoveltyScorer:
         max_similarity = float(sims[max_idx])
         novelty_score = 1.0 - max_similarity
         
+        # Plagiarism score is high if semantic similarity is very high
+        # We'll scale it so that similarity > 0.8 starts triggering high plagiarism warnings
+        plagiarism_score = max_similarity * 100
+        
         closest_paper = self.papers_data[max_idx]["metadata"].copy()
         closest_paper["id"] = self.papers_data[max_idx]["id"]
         
         return {
-            "novelty_score": novelty_score,
-            "max_similarity": max_similarity,
+            "novelty_score": round(novelty_score, 3),
+            "max_similarity": round(max_similarity, 3),
+            "plagiarism_score": round(plagiarism_score, 2),
             "closest_paper": closest_paper
         }
 

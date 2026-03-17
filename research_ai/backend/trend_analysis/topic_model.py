@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import pandas as pd
 import numpy as np
@@ -6,7 +7,13 @@ from bertopic import BERTopic
 from umap import UMAP
 from hdbscan import HDBSCAN
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from backend.utils.llm_factory import get_llm
+
+# Standardize path for backend imports
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+from utils.llm_factory import get_llm
 from langchain_core.prompts import PromptTemplate
 
 DOMAIN_STOPWORDS = {
@@ -146,17 +153,35 @@ def analyze_trends():
                 if falling_methods:
                     methodological_shift += f" away from {', '.join(falling_methods[:2])}"
             
+        # 6. Evolution Timeline (New)
+        # We track how keywords evolve for this topic over time
+        evolution_timeline = []
+        if len(topic_years) >= 2:
+            for yr in topic_years:
+                yr_docs = topic_df[topic_df['year'] == yr]['document'].tolist()
+                # Simple keyword extraction for this year
+                from sklearn.feature_extraction.text import CountVectorizer
+                cv = CountVectorizer(stop_words='english', max_features=5)
+                try:
+                    cv.fit(yr_docs)
+                    yr_keywords = list(cv.vocabulary_.keys())
+                    evolution_timeline.append(f"{yr}: {', '.join(yr_keywords)}")
+                except:
+                    pass
+        
         advanced_metrics[topic] = {
             "growth_rate": float(growth),
             "citation_velocity": float(citation_velocity),
             "novelty_shift": float(embedding_shift),
             "methodological_shift": methodological_shift,
+            "evolution_timeline": " | ".join(evolution_timeline),
             "trend_type": trend_type
         }
         
     topic_info["growth_rate"] = topic_info["Topic"].apply(lambda x: advanced_metrics.get(x, {}).get("growth_rate", 0))    
     topic_info["trend_type"] = topic_info["Topic"].apply(lambda x: advanced_metrics.get(x, {}).get("trend_type", "Unknown"))
     topic_info["methodological_shift"] = topic_info["Topic"].apply(lambda x: advanced_metrics.get(x, {}).get("methodological_shift", ""))
+    topic_info["evolution_timeline"] = topic_info["Topic"].apply(lambda x: advanced_metrics.get(x, {}).get("evolution_timeline", ""))
 
     
     emerging_topics = topic_info[topic_info["Topic"] != -1].sort_values(by="growth_rate", ascending=False)
@@ -170,6 +195,7 @@ def analyze_trends():
         Trend Classification: {trend_type}
         Methodological Shift: {shift}
         Topic Growth Metric: {growth}
+        Evolution Timeline: {evolution}
         
         Output format exactly as:
         
@@ -178,6 +204,9 @@ def analyze_trends():
         **Topic:** (Generate a concise 3-5 word name for this research area based on the keywords)
         
         **Trend Classification:** {trend_type}
+        
+        **Research Evolution:**
+        (Describe the progression from the timeline: {evolution})
         
         **Key Methodological Shift:** 
         (Explain the shift contextually: {shift})
@@ -188,7 +217,7 @@ def analyze_trends():
         **Dominant Research Themes:**
         - (bullet exactly 3 dominant sub-themes inferred from the keywords)
         """,
-        input_variables=["keywords", "trend_type", "shift", "growth"]
+        input_variables=["keywords", "trend_type", "shift", "growth", "evolution"]
     )
     chain = prompt | llm
 
@@ -203,7 +232,8 @@ def analyze_trends():
                 "keywords": kw_str, 
                 "trend_type": row.get("trend_type", "Unknown"), 
                 "shift": row.get("methodological_shift", "Unknown"), 
-                "growth": f"{row['growth_rate']:.2f}"
+                "growth": f"{row['growth_rate']:.2f}",
+                "evolution": row.get("evolution_timeline", "Initial exploration phase.")
             })
             insight_report = response.content.strip()
             
@@ -216,6 +246,19 @@ def analyze_trends():
             topic_name = ", ".join(keyword_list[:3])
             insight_report = f"Topic: {topic_name}"
             
+        # 7. Collect Representative Papers (New)
+        # We take the top papers that contributed most to this topic cluster
+        # For simplicity, we'll take top papers based on their inclusion in this topic
+        topic_paper_indices = [i for i, t in enumerate(topics) if t == t_id]
+        topic_papers = []
+        for idx in topic_paper_indices[:5]: # Take top 5 for selection
+            p = data[idx]
+            if p["metadata"].get("pdf_url"):
+                topic_papers.append({
+                    "title": p["metadata"].get("title", "Unknown"),
+                    "url": p["metadata"].get("pdf_url")
+                })
+        
         results.append({
             "topic_id": t_id,
             "topic_name": topic_name,
@@ -223,7 +266,8 @@ def analyze_trends():
             "insight_report": insight_report,
             "keywords": keyword_list,
             "papers_in_topic": int(row["Count"]),
-            "growth_rate": float(row["growth_rate"])
+            "growth_rate": float(row["growth_rate"]),
+            "representative_papers": topic_papers[:3] # Keep top 3
         })
         
     print(f"Discovered {len(results)} emerging topics.")

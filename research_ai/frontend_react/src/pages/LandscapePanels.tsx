@@ -1,24 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { Globe, Lightbulb, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 export default function LandscapePanels() {
-  const [insight, setInsight] = useState('');
   const [forecast, setForecast] = useState('');
-  const [loadingInsight, setLoadingInsight] = useState(false);
   const [loadingForecast, setLoadingForecast] = useState(false);
-
-  const fetchInsight = async () => {
-    setLoadingInsight(true);
-    try {
-      const res = await axios.get('http://localhost:8000/api/insights');
-      setInsight(res.data.report);
-    } catch(err) {
-       console.error(err);
-    }
-    setLoadingInsight(false);
-  }
   
   const fetchForecast = async () => {
     setLoadingForecast(true);
@@ -38,31 +25,7 @@ export default function LandscapePanels() {
         Macroscopic Intelligence
       </h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem', flex: 1 }}>
-        
-        {/* Research Insight Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-           <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', borderTop: '4px solid #14b8a6' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.25rem', margin: 0, border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                   Landscape Summary
-                </h2>
-                <button className="btn" onClick={fetchInsight} disabled={loadingInsight} style={{ padding: '0.5rem 1rem', background: '#0f766e' }}>
-                   {loadingInsight ? <Loader2 size={16} className="animate-spin" /> : 'Synthesize'}
-                </button>
-             </div>
-             
-             <div className="markdown-body" style={{ flex: 1, overflowY: 'auto', paddingRight: '1rem' }}>
-                {insight ? (
-                  <ReactMarkdown>{insight}</ReactMarkdown>
-                ) : (
-                  <div style={{ color: 'var(--text-muted)', display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                    Click Synthesize to read the aggregated landscape of Trends and Gaps across the corpus.
-                  </div>
-                )}
-             </div>
-           </div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem', flex: 1 }}>
         
         {/* Future Forecast Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

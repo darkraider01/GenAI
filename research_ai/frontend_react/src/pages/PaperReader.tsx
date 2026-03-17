@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { UploadCloud, FileText, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, Lightbulb } from 'lucide-react';
 
@@ -107,19 +107,33 @@ export default function PaperReader() {
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <Collapsible title="Key Contributions" defaultOpen={true} icon={CheckCircle2}>
-               <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                 {result.contributions?.map((c: string, i: number) => <li key={i}>{c}</li>)}
+               <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                 {result.contributions?.map((c: string, i: number) => (
+                   <li key={i} style={{ lineHeight: 1.6, color: '#e2e8f0' }}>
+                     {c}
+                   </li>
+                 ))}
                </ul>
             </Collapsible>
             
             <Collapsible title="Methodology Overview" defaultOpen={true}>
-              <div style={{ lineHeight: 1.7 }}>{result.methodology}</div>
+              <div style={{ lineHeight: 1.8, color: '#e2e8f0', whiteSpace: 'pre-wrap', fontSize: '1.05rem' }}>
+                {result.methodology}
+              </div>
             </Collapsible>
             
-            <Collapsible title="Datasets & Evaluation" defaultOpen={true}>
-              <div style={{ marginBottom: '1rem' }}>
+            <Collapsible title="Datasets & Implementation" defaultOpen={true}>
+              <div style={{ marginBottom: '1.5rem' }}>
                 <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Datasets Used:</strong>
                 {result.datasets?.map((d: string, i: number) => <span key={i} className="badge">{d}</span>)}
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Tech Stack:</strong>
+                {result.tech_stack?.map((t: string, i: number) => (
+                  <span key={i} className="badge" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.3)' }}>
+                    {t}
+                  </span>
+                ))}
               </div>
               <div>
                 <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Metrics:</strong>

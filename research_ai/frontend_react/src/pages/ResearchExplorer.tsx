@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Telescope, Loader2, Bot } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 export default function ResearchExplorer() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [searchParams] = useSearchParams();
 
-  const handleSearch = async () => {
-    if (!query) return;
+  const triggerSearch = async (searchQuery: string) => {
+    if (!searchQuery) return;
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:8000/api/search', { query });
+      const res = await axios.post('http://localhost:8000/api/search', { query: searchQuery });
       setResults(res.data);
     } catch (err) {
       console.error(err);
@@ -19,6 +22,27 @@ export default function ResearchExplorer() {
     }
     setLoading(false);
   };
+
+  const fetchHistory = async () => {
+    try {
+      const res = await axios.get('http://localhost:8000/api/search-history');
+      setHistory(res.data.history || []);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setQuery(q);
+      triggerSearch(q);
+    }
+  }, [searchParams]);
+
+  const handleSearch = () => triggerSearch(query);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -51,6 +75,26 @@ export default function ResearchExplorer() {
         </button>
       </div>
 
+      {history.length > 0 && results.length === 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ fontSize: '0.75rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, marginBottom: '0.75rem' }}>
+            Recent Searches
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {history.map((h, i) => (
+              <button 
+                key={i} 
+                className="chip"
+                onClick={() => { setQuery(h.query); triggerSearch(h.query); }}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+              >
+                {h.query}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1, overflowY: 'auto' }}>
         {results.map((r, i) => (
           <div key={i} className="glass-card" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -68,9 +112,29 @@ export default function ResearchExplorer() {
                <span style={{ color: '#94a3b8' }}>{Array.isArray(r.authors) ? r.authors.join(', ') : r.authors}</span>
             </div>
             
-            <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '0.95rem' }}>
+            <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '0.95rem', marginBottom: '1.5rem' }}>
               {r.abstract}
             </p>
+            
+            {r.pdf_url && (
+              <a 
+                href={r.pdf_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  background: 'rgba(99, 102, 241, 0.2)', 
+                  border: '1px solid rgba(99, 102, 241, 0.4)',
+                  fontSize: '0.85rem',
+                  padding: '0.5rem 1rem'
+                }}
+              >
+                View Research Paper
+              </a>
+            )}
           </div>
         ))}
         {results.length === 0 && !loading && query && (

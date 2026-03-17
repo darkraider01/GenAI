@@ -1,8 +1,8 @@
 import os
 import re
 from langchain_core.prompts import PromptTemplate
-from backend.utils.llm_factory import get_llm
-from fpdf import FPDF
+from utils.llm_factory import get_llm
+# from fpdf import FPDF # Removed to avoid conflict, local import in export_pdf is now more robust
 
 class ProposalWriter:
     def __init__(self, llm=None):
@@ -76,19 +76,47 @@ class ProposalWriter:
         return proposal_markdown
         
     def export_pdf(self, markdown_text: str, output_path: str):
-        # A simple text-to-PDF export using FPDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.set_font("Helvetica", size=11)
-        
-        # Super basic string cleaning for PDF
-        text = markdown_text.encode('latin-1', 'replace').decode('latin-1')
-        
-        for line in text.split('\n'):
-            pdf.multi_cell(0, 5, txt=line)
+        # Using fpdf2 features for better reliability
+        try:
+            from fpdf import FPDF
+        except ImportError:
+            from fpdf2 import FPDF
             
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("helvetica", size=12)
+        
+        # Use an explicit width to avoid "not enough horizontal space" errors
+        # A4 is 210mm wide. Default margin is 10mm on each side.
+        # 210 - 10 - 10 = 190mm usable width.
+        w = 190
+        
+        # Ensure directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Add content line by line
+        for line in markdown_text.split('\n'):
+            if not line.strip():
+                pdf.ln(5)
+                continue
+                
+            # Naive Markdown rendering
+            if line.startswith('###'):
+                pdf.set_font("helvetica", 'B', 12)
+                pdf.multi_cell(w, 10, txt=line.replace('###', '').strip())
+                pdf.set_font("helvetica", size=12)
+            elif line.startswith('##'):
+                pdf.set_font("helvetica", 'B', 14)
+                pdf.multi_cell(w, 12, txt=line.replace('##', '').strip())
+                pdf.set_font("helvetica", size=12)
+            elif line.startswith('#'):
+                pdf.set_font("helvetica", 'B', 16)
+                pdf.multi_cell(w, 15, txt=line.replace('#', '').strip())
+                pdf.set_font("helvetica", size=12)
+            else:
+                pdf.multi_cell(w, 8, txt=line)
+            
         pdf.output(output_path)
         return output_path
 

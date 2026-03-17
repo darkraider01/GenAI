@@ -1,0 +1,62 @@
+[
+  {
+    "id": "2603.11099v1",
+    "title": "Graph Tokenization for Bridging Graphs and Transformers",
+    "abstract": "The success of large pretrained Transformers is closely tied to tokenizers, which convert raw input into discrete symbols. Extending these models to graph-structured data remains a significant challenge. In this work, we introduce a graph tokenization framework that generates sequential representations of graphs by combining reversible graph serialization, which preserves graph information, with Byte Pair Encoding (BPE), a widely adopted tokenizer in large language models (LLMs). To better capture structural information, the graph serialization process is guided by global statistics of graph substructures, ensuring that frequently occurring substructures appear more often in the sequence and can be merged by BPE into meaningful tokens. Empirical results demonstrate that the proposed tokenizer enables Transformers such as BERT to be directly applied to graph benchmarks without architectural modifications. The proposed approach achieves state-of-the-art results on 14 benchmark datasets and frequently outperforms both graph neural networks and specialized graph transformers. This work bridges the gap between graph-structured data and the ecosystem of sequence models. Our code is available at \\href{https://github.com/BUPT-GAMMA/Graph-Tokenization-for-Bridging-Graphs-and-Transformers}{\\color{blue}here}.",
+    "authors": "Zeyuan Guo,Enmao Diao,Cheng Yang,Chuan Shi",
+    "published_date": "2026-03-11T08:57:10+00:00",
+    "year": "2026",
+    "pdf_url": "https://arxiv.org/pdf/2603.11099v1",
+    "similarity": 0.623,
+    "match_reason": "Semantic Match + Keyword Match",
+    "hybrid_score": 0.0325
+  },
+  {
+    "id": "2603.11161v1",
+    "title": "Algorithmic Capture, Computational Complexity, and Inductive Bias of Infinite Transformers",
+    "abstract": "We formally define Algorithmic Capture (i.e., ``grokking'' an algorithm) as the ability of a neural network to generalize to arbitrary problem sizes ($T$) with controllable error and minimal sample adaptation, distinguishing true algorithmic learning from statistical interpolation. By analyzing infinite-width transformers in both the lazy and rich regimes, we derive upper bounds on the inference-time computational complexity of the functions these networks can learn. We show that despite their universal expressivity, transformers possess an inductive bias towards low-complexity algorithms within the Efficient Polynomial Time Heuristic Scheme (EPTHS) class. This bias effectively prevents them from capturing higher-complexity algorithms, while allowing success on simpler tasks like search, copy, and sort.",
+    "authors": "Orit Davidovich,Zohar Ringel",
+    "published_date": "2026-03-11T18:00:00+00:00",
+    "year": "2026",
+    "pdf_url": "https://arxiv.org/pdf/2603.11161v1",
+    "similarity": 0.62,
+    "match_reason": "Semantic Match + Keyword Match",
+    "hybrid_score": 0.0312
+  },
+  {
+    "id": "2603.09416v1",
+    "title": "Investigating Gender Stereotypes in Large Language Models via Social Determinants of Health",
+    "abstract": "Large Language Models (LLMs) excel in Natural Language Processing (NLP) tasks, but they often propagate biases embedded in their training data, which is potentially impactful in sensitive domains like healthcare. While existing benchmarks evaluate biases related to individual social determinants of health (SDoH) such as gender or ethnicity, they often overlook interactions between these factors and lack context-specific assessments. This study investigates bias in LLMs by probing the relationships between gender and other SDoH in French patient records. Through a series of experiments, we found that embedded stereotypes can be probed using SDoH input and that LLMs rely on embedded stereotypes to make gendered decisions, suggesting that evaluating interactions among SDoH factors could usefully complement existing approaches to assessing LLM performance and bias.",
+    "authors": "Trung Hieu Ngo,Adrien Bazoge,Solen Quiniou,Pierre-Antoine Gourraud,Emmanuel Morin",
+    "published_date": "2026-03-10T09:30:10+00:00",
+    "year": "2026",
+    "pdf_url": "https://arxiv.org/pdf/2603.09416v1",
+    "similarity": 0.5,
+    "match_reason": "Keyword Match",
+    "hybrid_score": 0.0164
+  },
+  {
+    "id": "2603.11687v1",
+    "title": "SemBench: A Universal Semantic Framework for LLM Evaluation",
+    "abstract": "Recent progress in Natural Language Processing (NLP) has been driven by the emergence of Large Language Models (LLMs), which exhibit remarkable generative and reasoning capabilities. However, despite their success, evaluating the true semantic understanding of these models remains a persistent challenge. Traditional benchmarks such as Word-in-Context (WiC) effectively probe this capability, but their creation is resource-intensive and often limited to high-resource languages. In this paper, we introduce SemBench, a framework for automatically generating synthetic benchmarks that assess the semantic competence of LLMs using only dictionary sense definitions and a sentence encoder. This approach eliminates the need for curated example sentences, making it both scalable and language-independent. We evaluate SemBench in three languages (English, Spanish, and Basque) spanning different levels of linguistic resources, and across a wide range of LLMs. Our results show that rankings derived from SemBench strongly correlate with those obtained from standard WiC datasets. Furthermore, our analysis demonstrates that only a small number of examples is required to achieve stable and meaningful rankings. Overall, SemBench provides a lightweight, adaptable, and data-efficient framework for cross-lingual evaluation of semantic understanding in LLMs.",
+    "authors": "Mikel Zubillaga,Naiara Perez,Oscar Sainz,German Rigau",
+    "published_date": "2026-03-12T08:56:13+00:00",
+    "year": "2026",
+    "pdf_url": "https://arxiv.org/pdf/2603.11687v1",
+    "similarity": 0.623,
+    "match_reason": "Semantic Match",
+    "hybrid_score": 0.0161
+  },
+  {
+    "id": "2603.11332v1",
+    "title": "On the Computational Hardness of Transformers",
+    "abstract": "The transformer has revolutionized modern AI across language, vision, and beyond. It consists of $L$ layers, each running $H$ attention heads in parallel and feeding the combined output to the subsequent layer. In attention, the input consists of $N$ tokens, each a vector of dimension $m$. The attention mechanism involves multiplying three $N \\times m$ matrices, applying softmax to an intermediate product. Several recent works have advanced our understanding of the complexity of attention.\n  Known algorithms for transformers compute each attention head independently. This raises a fundamental question that has recurred throughout TCS under the guise of ``direct sum'' problems: can multiple instances of the same problem be solved more efficiently than solving each instance separately? Many answers to this question, both positive and negative, have arisen in fields spanning communication complexity and algorithm design. Thus, we ask whether transformers can be computed more efficiently than $LH$ independent evaluations of attention.\n  In this paper, we resolve this question in the negative, and give the first non-trivial computational lower bounds for multi-head multi-layer transformers. In the small embedding regime ($m = N^{o(1)}$), computing $LH$ attention heads separately takes $LHN^{2 + o(1)}$ time. We establish that this is essentially optimal under SETH. In the large embedding regime ($m = N$), one can compute $LH$ attention heads separately using $LHN^{ω+ o(1)}$ arithmetic operations (plus exponents), where $ω$ is the matrix multiplication exponent. We establish that this is optimal, by showing that $LHN^{ω- o(1)}$ arithmetic operations are necessary when $ω> 2$. Our lower bound in the large embedding regime relies on a novel application of the Baur-Strassen theorem, a powerful algorithmic tool underpinning the famous backpropagation algorithm.",
+    "authors": "Barna Saha,Yinzhan Xu,Christopher Ye,Hantao Yu",
+    "published_date": "2026-03-11T21:48:43+00:00",
+    "year": "2026",
+    "pdf_url": "https://arxiv.org/pdf/2603.11332v1",
+    "similarity": 0.5,
+    "match_reason": "Keyword Match",
+    "hybrid_score": 0.0159
+  }
+]

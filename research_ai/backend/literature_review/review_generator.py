@@ -2,41 +2,53 @@ from typing import List, Dict
 import numpy as np
 from umap import UMAP
 from hdbscan import HDBSCAN
-from backend.utils.llm_factory import get_llm
+from utils.llm_factory import get_llm
 from langchain_core.prompts import PromptTemplate
-from backend.rag.retriever import ResearchRetriever
+from rag.retriever import ResearchRetriever
 
 class LiteratureReviewGenerator:
     def __init__(self, llm=None):
         self.retriever = ResearchRetriever()
         self.llm = llm or get_llm(temperature=0.3)
         self.prompt = PromptTemplate(
-            template="""You are an expert academic summarizing a clustered literature corpus.
-            Generate a formal, structured Literature Review survey mapping the provided clusters of recent papers.
-            
+            template="""You are a senior research scientist and academic editor. 
+            Generate a high-quality, formal, and deeply structured Literature Review that standardizes the provided thematic clusters into a cohesive narrative suitable for a university-level research report.
+
             Research Topic: {topic}
             
             Discovered Clusters (Themes) & Papers:
             {clusters_text}
             
+            Instructions:
+            1. Use a formal academic tone throughout.
+            2. Integrate the papers into the narrative using in-text citations in the format: [Title, Year].
+            3. Ensure each section is substantial and provides synthesis beyond mere listing.
+            4. Focus on how the themes relate to one another and the overall topic.
+            
             Write the formal Literature Review strictly using the following EXACT markdown sections:
             
             # Literature Review: {topic}
             
-            ## 1. Introduction
-            (1-2 paragraphs summarizing the overarching context).
+            ## 1. Executive Summary
+            (A concise high-level overview of the current state of research in this domain).
+
+            ## 2. Tech Stacks used by current papers
+            (Identify and discuss the technical stacks, programming languages, frameworks, and specific model architectures utilized in the referenced research).
             
-            ## 2. Major Research Themes
-            (For each cluster provided, create a subsection detailing its thematic focus and citing its key papers).
+            ## 3. Thematic Analysis of Research
+            (For each cluster provided, create a robust subsection. Synthesize the core contributions of the papers within the theme and discuss their collective impact).
             
-            ## 3. Methodological Approaches
-            (Synthesize the prominent methods/architectures seen across these themes).
+            ## 4. Methodological Synthesis
+            (Analyze and compare the methodologies, architectures, or frameworks used across the various themes).
             
-            ## 4. Current Limitations
-            (Discuss weaknesses apparent in these approaches).
+            ## 5. Current Research Gaps and Limitations
+            (Critically discuss the weaknesses, missing links, or unresolved issues in the current literature).
             
-            ## 5. Open Research Challenges
-            (Future outlook connecting the limitations into actionable next steps).
+            ## 6. Conclusion & Future Directions
+            (A final summary connecting the findings to actionable future research paths).
+            
+            ## 7. System Reasoning & Sources
+            (Provide a short paragraph explaining *why* the system synthesized this review based on the retrieved themes, and explicitly list the top 3-5 guiding papers with their primary contributions).
             """,
             input_variables=["topic", "clusters_text"]
         )
@@ -81,7 +93,8 @@ class LiteratureReviewGenerator:
         cluster_data_for_ui = []
         
         for theme, group_papers in groups.items():
-            abstract_snips = "\n".join([f"- {p['title']}: {p['abstract'][:200]}..." for p in group_papers])
+            # SLIGHTLY REDUCED CONTEXT for reliability: 800 characters per abstract
+            abstract_snips = "\n".join([f"- {p['title']} ({p.get('year', 'N/A')}): {p['abstract'][:800]}..." for p in group_papers])
             cluster_summaries.append(f"### {theme}\nPapers:\n{abstract_snips}\n")
             
             cluster_data_for_ui.append({
@@ -99,8 +112,9 @@ class LiteratureReviewGenerator:
             res = chain.invoke({"topic": topic, "clusters_text": clusters_text})
             review_md = res.content
         except Exception as e:
-            print("LLM Errl", e)
-            review_md = "Failed to generate review. Check LLM."
+            import traceback
+            print(f"LLM Error: {traceback.format_exc()}")
+            review_md = "Failed to generate review. Check LLM connection and logs."
             
         papers_used = [{"title": p.get("title"), "year": p.get("year", "Unknown"), "authors": p.get("authors", [])} for p in papers]
         
