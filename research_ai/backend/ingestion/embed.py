@@ -50,5 +50,12 @@ def embed_papers():
         
     print(f"Embedded {len(embedded_data)} papers and saved to {output_path}")
 
+    # S3 backup (additive — does not affect local pipeline)
+    try:
+        from utils.storage_manager import storage
+        storage.upload_file(output_path, "embeddings_backup/embedded_papers.json")
+    except Exception:
+        pass  # S3 is optional; local file is the source of truth
+
 if __name__ == "__main__":
     embed_papers()

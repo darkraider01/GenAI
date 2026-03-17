@@ -39,5 +39,12 @@ def fetch_arxiv_papers(max_results=1000):
         
     print(f"Successfully saved {len(papers)} papers to {output_path}")
 
+    # S3 upload (additive — does not affect local pipeline)
+    try:
+        from utils.storage_manager import storage
+        storage.upload_file(output_path, "raw_papers/arxiv_papers.json")
+    except Exception:
+        pass  # S3 is optional; local file is the source of truth
+
 if __name__ == "__main__":
     fetch_arxiv_papers(1000)

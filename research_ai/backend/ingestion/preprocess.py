@@ -54,5 +54,12 @@ def preprocess_papers():
         
     print(f"Processed {len(cleaned_papers)} papers and saved to {output_path}")
 
+    # S3 upload (additive — does not affect local pipeline)
+    try:
+        from utils.storage_manager import storage
+        storage.upload_file(output_path, "processed/clean_papers.json")
+    except Exception:
+        pass  # S3 is optional; local file is the source of truth
+
 if __name__ == "__main__":
     preprocess_papers()

@@ -21,3 +21,6 @@ fpdf2
 langchain-google-genai
 fpdf
 seaborn
+boto3
+matplotlib
+rank_bm25

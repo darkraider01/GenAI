@@ -37,6 +37,7 @@ from evaluation.novelty_score import NoveltyScorer
 from agents.orchestrator import ResearchOrchestrator
 from utils.llm_factory import get_llm
 from responsible_ai.rai_engine import RAIAuditor
+from utils.storage_manager import storage as s3_storage
 from langchain_core.prompts import PromptTemplate
 from dotenv import load_dotenv
 import os
@@ -153,6 +154,15 @@ def get_orchestrator():
 @app.post("/api/literature-review")
 async def generate_literature_review(req: LitReviewRequest):
     result = get_review_gen().generate(req.topic)
+    # S3 persistence (additive, non-breaking)
+    try:
+        pid = s3_storage.generate_project_id()
+        s3_storage.save_json({"topic": req.topic, "result": result}, f"outputs/lit_review_{pid}.json")
+        if isinstance(result, dict):
+            result["project_id"] = pid
+            result["s3_url"] = s3_storage.get_file_url(f"outputs/lit_review_{pid}.json")
+    except Exception:
+        pass
     return result
 
 @app.post("/api/analyze-paper")
@@ -164,6 +174,17 @@ async def analyze_paper(file: UploadFile = File(...)):
     # PERSISTENCE: Save reader history
     from utils.history_manager import history_manager
     history_manager.add_reader_entry(file.filename, json.dumps(structured_data))
+    
+    # S3 persistence (additive, non-breaking)
+    try:
+        pid = s3_storage.generate_project_id()
+        s3_storage.save_json({"filename": file.filename, "analysis": structured_data}, f"outputs/paper_analysis_{pid}.json")
+        s3_storage.upload_bytes(file_bytes, f"raw_papers/{file.filename}")
+        if isinstance(structured_data, dict):
+            structured_data["project_id"] = pid
+            structured_data["s3_url"] = s3_storage.get_file_url(f"outputs/paper_analysis_{pid}.json")
+    except Exception:
+        pass
     
     return structured_data
 
@@ -287,7 +308,16 @@ async def generate_proposal(req: ProposalRequest):
     # Retrieve top 5 papers as context for the Proposal Writer (matching streamlit behavior)
     context_papers = get_retriever().retrieve(req.topic, top_k=5)
     markdown_out = get_proposal_writer().generate_proposal(req.topic, req.methodology, context_papers)
-    return {"markdown": markdown_out}
+    response = {"markdown": markdown_out}
+    # S3 persistence (additive, non-breaking)
+    try:
+        pid = s3_storage.generate_project_id()
+        s3_storage.save_json({"topic": req.topic, "methodology": req.methodology, "markdown": markdown_out}, f"outputs/proposal_{pid}.json")
+        response["project_id"] = pid
+        response["s3_url"] = s3_storage.get_file_url(f"outputs/proposal_{pid}.json")
+    except Exception:
+        pass
+    return response
 
 @app.post("/api/novelty-score")
 async def score_novelty(req: NoveltyRequest):
@@ -310,7 +340,17 @@ async def run_orchestrator(req: OrchestratorRequest):
         from utils.history_manager import history_manager
         history_manager.add_swarm_entry(req.topic, res_text)
         
-        return {"result": res_text, "logs": logs}
+        response = {"result": res_text, "logs": logs}
+        # S3 persistence (additive, non-breaking)
+        try:
+            pid = s3_storage.generate_project_id()
+            s3_storage.save_json({"topic": req.topic, "report": res_text, "logs": logs}, f"outputs/swarm_{pid}.json")
+            response["project_id"] = pid
+            response["s3_url"] = s3_storage.get_file_url(f"outputs/swarm_{pid}.json")
+        except Exception:
+            pass
+        
+        return response
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -478,6 +518,43 @@ async def run_rai_audit(req: RAIAuditRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# ── S3 Storage Endpoints (independent, non-breaking) ─────────────────────────
+
+class StorageSaveRequest(BaseModel):
+    data: dict
+    key: str = None  # optional custom key
+
+@app.get("/api/storage/project/{project_id}")
+async def get_stored_project(project_id: str):
+    """Retrieve a previously saved output from S3/local storage."""
+    # Search across output prefixes
+    for prefix in ["outputs/"]:
+        files = s3_storage.list_files(prefix)
+        for f in files:
+            if project_id in f["key"]:
+                data = s3_storage.load_json(f["key"])
+                if data is not None:
+                    return {"project_id": project_id, "key": f["key"], "data": data}
+    raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+
+@app.post("/api/storage/save")
+async def manual_storage_save(req: StorageSaveRequest):
+    """Manually save arbitrary JSON payload to S3/local storage."""
+    pid = s3_storage.generate_project_id()
+    key = req.key or f"outputs/manual_{pid}.json"
+    s3_storage.save_json(req.data, key)
+    return {
+        "project_id": pid,
+        "key": key,
+        "s3_url": s3_storage.get_file_url(key),
+    }
+
+@app.get("/api/storage/list")
+async def list_stored_outputs(prefix: str = "outputs/"):
+    """List all saved outputs in storage."""
+    files = s3_storage.list_files(prefix)
+    return {"files": files, "count": len(files)}
 
 if __name__ == "__main__":
     import uvicorn
